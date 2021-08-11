@@ -5,7 +5,7 @@ const generateHTML = (taskData) =>
   `<div id=${taskData.id} class="col-md-6 col-lg-4 my-4">
   <div class="card">
     <div class="card-header gap-2 d-flex justify-content-end">
-      <button class="btn btn-outline-info" name=${taskData.id}>
+      <button class="btn btn-outline-info" name=${taskData.id} onclick="editCard.apply(this,arguments)">
         <i class="fal fa-pencil" name=${taskData.id}></i>
       </button>
       <button class="btn btn-outline-danger" name=${taskData.id} onclick="deleteCard.apply(this,arguments)">
@@ -25,7 +25,7 @@ const generateHTML = (taskData) =>
       <span class="badge bg-primary">${taskData.type}</span>
     </div>
     <div class="card-footer">
-      <button class="btn btn-outline-primary" name=${taskData.id}>Open Task</button>
+      <button class="btn btn-outline-primary" name=${taskData.id} data-bs-toggle="modal" data-bs-target="#taskModal" onclick="openTaskModal.apply(this,arguments)">Open Task</button>
     </div>
   </div>
 </div>`;
@@ -90,4 +90,83 @@ const deleteCard = (event) => {
   else{
     return taskContainer.removeChild(event.target.parentNode.parentNode.parentNode.parentNode);
   }
+};
+
+const editCard = (event) => {
+  const elementType = event.target.tagName;
+  let taskType;
+  let taskTitle;
+  let taskDescription;
+  let submitButton;
+  let parentElement;
+  if(elementType === "BUTTON"){
+    parentElement = event.target.parentNode.parentNode;
+  }
+  else{
+    parentElement = event.target.parentNode.parentNode.parentNode;
+  }
+  taskTitle = parentElement.childNodes[3].childNodes[3];
+  taskDescription = parentElement.childNodes[3].childNodes[5];
+  taskType = parentElement.childNodes[3].childNodes[7];
+  submitButton = parentElement.childNodes[5].childNodes[1];
+  taskTitle.setAttribute("contenteditable","true");
+  taskType.setAttribute("contenteditable","true");
+  taskDescription.setAttribute("contenteditable","true");
+  submitButton.setAttribute("onclick","saveEdit.apply(this,arguments)")
+  submitButton.innerHTML="Save Changes";
+};
+
+const saveEdit = (event) => {
+  const targetID = event.target.getAttribute("name");
+  const elementType = event.target.tagName;
+  let submitButton;
+  let parentElement;
+  if(elementType === "BUTTON"){
+    parentElement = event.target.parentNode.parentNode;
+  }
+  else{
+    parentElement = event.target.parentNode.parentNode.parentNode;
+  }
+  const taskTitle = parentElement.childNodes[3].childNodes[3];
+  const taskDescription = parentElement.childNodes[3].childNodes[5];
+  const taskType = parentElement.childNodes[3].childNodes[7];
+  submitButton = parentElement.childNodes[5].childNodes[1];
+  const updatedData = {
+    title:taskTitle.innerHTML,
+    type:taskType.innerHTML,
+    description:taskDescription.innerHTML
+  };
+  const newData = globalTaskData.map((task)=>{
+    if(task.id===targetID){
+      return {...task,...updatedData};
+    }
+    return task;
+  });
+  globalTaskData = newData;
+  saveToLocalStorage();
+  taskTitle.setAttribute("contenteditable","false");
+  taskType.setAttribute("contenteditable","false");
+  taskDescription.setAttribute("contenteditable","false");
+  submitButton.innerHTML="Open Task";
+};
+
+const openTaskModal = (event) => {
+  const targetID = event.target.getAttribute("name");
+  const elementType = event.target.tagName;
+  let parentElement;
+  if(elementType === "BUTTON"){
+    parentElement = event.target.parentNode.parentNode;
+  }
+  else{
+    parentElement = event.target.parentNode.parentNode.parentNode;
+  }
+  const taskTitle = parentElement.childNodes[3].childNodes[3];
+  const taskDescription = parentElement.childNodes[3].childNodes[5];
+  const imageURL=parentElement.childNodes[3].childNodes[1];
+  const d = new Date(Number(targetID.toString()));
+  const temp = "Created on "+d.toDateString(); 
+  document.getElementById("taskModalImage").src=imageURL.src;
+  document.getElementById("taskModalDate").innerHTML=temp;
+  document.getElementById("taskModalTitle").innerHTML=taskTitle.innerHTML;
+  document.getElementById("taskModalDescription").innerHTML=taskDescription.innerHTML;
 };
